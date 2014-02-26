@@ -1,5 +1,5 @@
 #!/bin/bash
-TMPOUT=`mktemp -u`
+TMPOUT=`mktemp -u tmpout.XXX`
 NTESTED=0
 NPASSED=0
 TESTS=`cd tests/functionality; ls *.jpg *.png`

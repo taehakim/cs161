@@ -1,6 +1,6 @@
 /*
  * I assert the work on this project was all my own.
- * <put your name here>
+ * Spencer Schack and Aditya Kaulagi
  */
 
 #include <stdio.h>
