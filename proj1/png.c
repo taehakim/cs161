@@ -4,8 +4,13 @@
 #include <zlib.h>
 #include "png.h"
 
-// Every PNG starts with these 8 bytes.
-const static char HEADER[8] = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a";
+const static char
+	// Every PNG starts with these 8 bytes.
+	HEADER[8] = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a",
+	// Chunk type identifiers.
+	tEXt[4] = "\x74\x45\x58\x74",
+	xTXt[4] = "\x7A\x54\x58\x74",
+	tIME[4] = "\x74\x49\x4D\x45";
 
 /* 
  * Ensures that the first 8 bytes of 'f' are equal to 'HEADER'.
@@ -28,7 +33,7 @@ int valid_header(FILE *f) {
  * -1 if the chunk was invalid.
  */
 int parse_chunk(FILE *f) {
-
+	return -1;
 }
 
 /*
@@ -39,8 +44,8 @@ int parse_chunk(FILE *f) {
 int analyze_png(FILE *f) {
 	if(valid_header(f)) {
 		int c;
-		while(c = parse_chunk(f)) {
-			if(c == -1) {
+		while((c = parse_chunk(f))) {
+			if(c < 0) {
 				return -1;
 			}
 		}
