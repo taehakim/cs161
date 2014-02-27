@@ -136,14 +136,23 @@ int parse_chunk(FILE *f) {
 		unsigned char* data = malloc(sizeof(char) * length);
 		if(data == NULL) { exit(1); }
 		// Read data buffer.
-		if(fread(data, sizeof(char), length, f) != length) { return -1; }
+		if(fread(data, sizeof(char), length, f) != length) {
+			free(data);
+			return -1;
+		}
 		// Parse checksum.
 		int expected_checksum = parse_int(f);
-		if(expected_checksum == -1) { return -1; }
+		if(expected_checksum == -1) {
+			free(data);
+			return -1;
+		}
 		// Generate checksum.
 		int actual_checksum = generate_checksum(chunktype, data, length);
 		// Compare checksums.
-		if(actual_checksum != expected_checksum) { return -1; }
+		if(actual_checksum != expected_checksum) {
+			free(data);
+			return -1;
+		}
 		// Parse data based on chunk type.
 		int parse_data = -1;
 		switch(chunktype) {
