@@ -4,9 +4,6 @@
 #include <zlib.h>
 #include "png.h"
 
-// Store whether or not there has been a tIME chunk yet.
-int seen_time;
-
 // Every PNG starts with these 8 bytes.
 static char HEADER[8] = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a";
 // Chunk types.
@@ -237,8 +234,6 @@ int parse_chunk(FILE *f) {
  * If it isn't a PNG file, return -1 and print nothing.
  */
 int analyze_png(FILE *f) {
-	// Reset the tIME chunk boolean.
-	seen_time = 0;
 	if(validate_header(f) != -1) {
 		int c;
 		while((c = parse_chunk(f))) {
