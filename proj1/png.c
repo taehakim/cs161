@@ -4,6 +4,7 @@
 #include <zlib.h>
 #include "png.h"
 
+// Store whether or not there has been a tIME chunk yet.
 int seen_time;
 
 // Every PNG starts with these 8 bytes.
@@ -80,6 +81,9 @@ int parse_chunktype(FILE *f) {
 	return 3;
 }
 
+/*
+ * Generate a CRC-32 checksum from the chunktype and the data.
+ */
 uLong generate_checksum(int chunktype, unsigned char data[], int length) {
 	uLong crc = crc32(0L, Z_NULL, 0);
 	crc = crc32(crc, (Bytef*) CHUNK_TYPES[chunktype], 4);
@@ -87,11 +91,33 @@ uLong generate_checksum(int chunktype, unsigned char data[], int length) {
 }
 
 /*
+ * Return the index of the first null character in 'data', otherwise return -1.
+ */
+int find_pivot(unsigned char data[], int length) {
+	int pivot = 0;
+	// Find where the null character is separating the key and value, but ensure
+	// that it's not greater or equal to length.
+	while(data[pivot] != 0) {
+		if(++pivot >= length) { return -1; }
+	}
+	return pivot;
+}
+
+/*
  * Parses 'data' expecting a tEXt chunk. Returns 0 if parsing succeeds,
  * otherwise -1.
  */
 int parse_tEXt(unsigned char data[], int length) {
-	return -1;
+	// Find the key-value separator.
+	int pivot = find_pivot(data, length);
+	if(pivot == -1) { return -1; }
+	// Calculate the length and address of the value.
+	unsigned int value_len = length - pivot - 1;
+	unsigned char* value = data + pivot + 1;
+	// The key has a null terminator and the next two arguments specify how many
+	// characters to print and from which address.
+	printf("%s: %.*s\n", data, value_len, value);
+	return 0;
 }
 
 /*
@@ -99,7 +125,38 @@ int parse_tEXt(unsigned char data[], int length) {
  * otherwise -1.
  */
 int parse_zTXt(unsigned char data[], int length) {
-	return -1;
+	// Find the key-value separator.
+	int pivot = find_pivot(data, length);
+	if(pivot == -1) { return -1; }
+	// Compression type should always be 0.
+	if(data[pivot + 1] != 0) { return -1; }
+	// Calculate the length and address of the compressed value.
+	unsigned int comp_len = length - pivot - 2;
+	unsigned char* comp = data + pivot + 2;
+	// Start off by giving zlib twice the room of the compressed data.
+	// (It will be multiplied by 2 in the while loop.)
+	unsigned long value_len = comp_len;
+	unsigned char* value = NULL;
+	int result;
+	do {
+		// Increase the destination buffer size by twofold.
+		value_len *= 2;
+		// Free the value, unless it's the first run.
+		if(value != NULL) { free(value); }
+		// Allocate memory for the uncompressed data.
+		value = malloc(sizeof(unsigned char) * value_len);
+		if(value == NULL) { return -1; }
+		// Attempt decompression.
+		result = uncompress(value, &value_len, comp, comp_len);
+	// Loop while there is not enough room in the destination buffer.
+	} while(result == Z_BUF_ERROR);
+	// If not Z_OK, then it was Z_MEM_ERROR (not enough memory) or Z_DATA_ERROR
+	// (bad data), either way, error out.
+	if(result != Z_OK) { return -1; }
+	// The key has a null terminator and the next two arguments specify how many
+	// characters to print and from which address.
+	printf("%s: %.*s\n", data, (unsigned int) value_len, value);
+	return 0;
 }
 
 /*
@@ -109,6 +166,7 @@ int parse_zTXt(unsigned char data[], int length) {
 int parse_tIME(unsigned char data[], int length) {
 	// All tIME chunks should be 7 bytes long.
 	if(length != 7) { return -1; }
+	// Combine data[0] and data[1] to form a 16 bit int.
 	int year = (data[0] << 8) | data[1];
 	printf("Timestamp: %d/%d/%d %d:%d:%d\n",
 		data[2], data[3], year,
@@ -133,8 +191,8 @@ int parse_chunk(FILE *f) {
 		fseek(f, length + 4, SEEK_CUR);
 	} else {
 		// Initialize data buffer;
-		unsigned char* data = malloc(sizeof(char) * length);
-		if(data == NULL) { exit(1); }
+		unsigned char* data = malloc(sizeof(unsigned char) * length);
+		if(data == NULL) { return -1; }
 		// Read data buffer.
 		if(fread(data, sizeof(char), length, f) != length) {
 			free(data);
@@ -160,7 +218,6 @@ int parse_chunk(FILE *f) {
 			case 1: parse_data = parse_zTXt(data, length); break;
 			case 2: parse_data = parse_tIME(data, length); break;
 		}
-		// Free ALL the data!
 		free(data);
 		if(parse_data == -1) { return -1; }
 	}
@@ -176,6 +233,7 @@ int parse_chunk(FILE *f) {
  * If it isn't a PNG file, return -1 and print nothing.
  */
 int analyze_png(FILE *f) {
+	// Reset the tIME chunk boolean.
 	seen_time = 0;
 	if(validate_header(f) != -1) {
 		int c;
