@@ -152,10 +152,14 @@ int parse_zTXt(unsigned char data[], int length) {
 	} while(result == Z_BUF_ERROR);
 	// If not Z_OK, then it was Z_MEM_ERROR (not enough memory) or Z_DATA_ERROR
 	// (bad data), either way, error out.
-	if(result != Z_OK) { return -1; }
+	if(result != Z_OK) {
+		free(value);
+		return -1;
+	}
 	// The key has a null terminator and the next two arguments specify how many
 	// characters to print and from which address.
 	printf("%s: %.*s\n", data, (unsigned int) value_len, value);
+	free(value);
 	return 0;
 }
 
