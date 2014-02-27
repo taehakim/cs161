@@ -16,6 +16,15 @@ static char* CHUNK_TYPES[3] = {
 };
 
 /*
+ * Returns the next byte in 'f' without advancing the position.
+ */
+int fpeek(FILE *f) {
+	int c = fgetc(f);
+	ungetc(c, f);
+	return c;
+}
+
+/*
  * Returns 0 if the two arrays are the same, -1 otherwise.
  */
 int array_cmp(char a[], char b[], int n) {
@@ -36,13 +45,6 @@ int validate_header(FILE *f) {
 		if(c == EOF || c != HEADER[i]) { return -1; }
 	}
 	return 0;
-}
-
-/*
- * Validates the checksum of 'data'. If valid, returns 0, otherwise -1.
- */
-int validate_checksum(char data[], int length, int checksum) {
-	return -1;
 }
 
 /*
@@ -78,7 +80,7 @@ int parse_chunktype(FILE *f) {
 	return 3;
 }
 
-uLong generate_checksum(int chunktype, char data[], int length) {
+uLong generate_checksum(int chunktype, unsigned char data[], int length) {
 	uLong crc = crc32(0L, Z_NULL, 0);
 	crc = crc32(crc, (Bytef*) CHUNK_TYPES[chunktype], 4);
 	return crc32(crc, (Bytef*) data, length);
@@ -88,7 +90,7 @@ uLong generate_checksum(int chunktype, char data[], int length) {
  * Parses 'data' expecting a tEXt chunk. Returns 0 if parsing succeeds,
  * otherwise -1.
  */
-int parse_tEXt(char data[], int length) {
+int parse_tEXt(unsigned char data[], int length) {
 	return -1;
 }
 
@@ -96,7 +98,7 @@ int parse_tEXt(char data[], int length) {
  * Parses 'data' expecting a zTXt chunk. Returns 0 if parsing succeeds,
  * otherwise -1.
  */
-int parse_zTXt(char data[], int length) {
+int parse_zTXt(unsigned char data[], int length) {
 	return -1;
 }
 
@@ -104,11 +106,11 @@ int parse_zTXt(char data[], int length) {
  * Parses 'data' expecting a tIME chunk. Returns 0 if parsing succeeds,
  * otherwise -1.
  */
-int parse_tIME(char data[], int length) {
+int parse_tIME(unsigned char data[], int length) {
 	// All tIME chunks should be 7 bytes long.
 	if(length != 7) { return -1; }
 	int year = (data[0] << 8) | data[1];
-	printf("Timestamp: %d/%d/%d %d:%d:%d",
+	printf("Timestamp: %d/%d/%d %d:%d:%d\n",
 		data[2], data[3], year,
 		data[4], data[5], data[6]);
 	return 0;
@@ -121,11 +123,9 @@ int parse_tIME(char data[], int length) {
  */
 int parse_chunk(FILE *f) {
 	// Parse length.
-	printf("Parsing length\n");
 	int length = parse_int(f);
 	if(length < 0) { return -1; }
 	// Parse chunktype.
-	printf("Parsing chunk type\n");
 	int chunktype = parse_chunktype(f);
 	if(chunktype < 0) { return -1; }
 	// Unknown chunk type, skip.
@@ -133,24 +133,18 @@ int parse_chunk(FILE *f) {
 		fseek(f, length + 4, SEEK_CUR);
 	} else {
 		// Initialize data buffer;
-		char* data = malloc(sizeof(char) * length);
+		unsigned char* data = malloc(sizeof(char) * length);
 		if(data == NULL) { exit(1); }
 		// Read data buffer.
-		printf("Copying data\n");
 		if(fread(data, sizeof(char), length, f) != length) { return -1; }
 		// Parse checksum.
-		printf("Parsing checksum\n");
 		int expected_checksum = parse_int(f);
 		if(expected_checksum == -1) { return -1; }
 		// Generate checksum.
 		int actual_checksum = generate_checksum(chunktype, data, length);
 		// Compare checksums.
-		printf("Comparing checksums\n");
-		printf("%d\n", actual_checksum);
-		printf("%d\n", expected_checksum);
 		if(actual_checksum != expected_checksum) { return -1; }
 		// Parse data based on chunk type.
-		printf("Parsing data\n");
 		int parse_data = -1;
 		switch(chunktype) {
 			case 0: parse_data = parse_tEXt(data, length); break;
@@ -162,7 +156,7 @@ int parse_chunk(FILE *f) {
 		if(parse_data == -1) { return -1; }
 	}
 	// Return 0 if this is the last chunk in the file.
-	if(feof(f)) { return 0; }
+	if(fpeek(f) == EOF) { return 0; }
 	// Return 1 to keep parsing.
 	return 1;
 }
@@ -177,9 +171,7 @@ int analyze_png(FILE *f) {
 	if(validate_header(f) != -1) {
 		int c;
 		while((c = parse_chunk(f))) {
-			if(c < 0) {
-				return -1;
-			}
+			if(c < 0) { return -1; }
 		}
 		return 0;
 	}
