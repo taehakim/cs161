@@ -4,12 +4,27 @@
 #include <zlib.h>
 #include "png.h"
 
+// Every PNG starts with these 8 bytes.
+const static char* HEADER = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a";
+
+// Ensures that the first 8 bytes of 'f' are equal to 'HEADER'.
+int valid_header(FILE * f) {
+	char c;
+	for(int i = 0; i < 8; i++) {
+		c = fgetc(f);
+		if(c == EOF || c != HEADER[i]) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 /*
  * Analyze a PNG file.
  * If it is a PNG file, print out all relevant metadata and return 0.
  * If it isn't a PNG file, return -1 and print nothing.
  */
 int analyze_png(FILE *f) {
-    /* YOU WRITE THIS PART */
+	if(!valid_header(f)) { return -1; }
     return -1;
 }
