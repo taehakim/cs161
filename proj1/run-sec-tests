@@ -1,7 +1,7 @@
 #!/bin/bash
 export LIBC_FATAL_STDERR_=1 # to get stack smashing errors to go to stderr
-TMPOUT=`mktemp -u`
-TMPERR=`mktemp -u`
+TMPOUT=`mktemp -u tmpout.XXX`
+TMPERR=`mktemp -u tmperr.XXX`
 
 NTESTED=0
 NPASSED=0

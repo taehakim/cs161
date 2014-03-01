@@ -117,7 +117,7 @@ int find_next_chunk(FILE *f) {
  * Returns 0 if 'marker' refers to a superchunk marker, otherwise returns -1.
  */
 int is_super_chunk(int marker) {
-	return (marker > 0xffd0 && marker < 0xffda) ? 0 : -1;
+	return (marker >= 0xffd0 && marker <= 0xffda) ? 0 : -1;
 }
 
 /*
