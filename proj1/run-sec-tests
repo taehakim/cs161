@@ -10,6 +10,7 @@ for f in tests/*/*.{png,jpg}
 do
     let NTESTED=1+$NTESTED
     valgrind -q --error-exitcode=42 \
+        --leak-check=no --track-origins=yes --suppressions=./libz.supp \
         ./analyze $f > $TMPOUT 2> $TMPERR
     RV=$?
     if [ $RV -eq 42 ]

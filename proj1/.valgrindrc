@@ -1,0 +1,1 @@
+--leak-check=no --track-origins=yes --suppressions=./libz.supp
