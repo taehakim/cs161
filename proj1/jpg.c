@@ -162,13 +162,6 @@ int is_string_datatype(int datatype) {
 }
 
 /*
- * Returns 0 if the datatype corresponds to an ASCII datatype, -1 otherwise.
- */
-int is_ascii_datatype(int datatype) {
-	return (datatype == 2) ? 0 : -1;
-}
-
-/*
  * Returns 0 if the tagid corresponds to the Exif IFD ptr tagid, -1 otherwise.
  */
 int is_exif_ptr_tagid(int tagid) {
@@ -216,11 +209,11 @@ int print_tag_name(int tagid) {
  */
 void print_value(unsigned int value) {
 	char bytes[4];
-	bytes[0] = value >> 24;
-	bytes[1] = value >> 16;
-	bytes[2] = value >> 8;
-	bytes[3] = value;
-	printf("%.4s", bytes);
+	bytes[0] = value;
+	bytes[1] = value >> 8;
+	bytes[2] = value >> 16;
+	bytes[3] = value >> 24;
+	printf("%.4s\n", bytes);
 }
 
 /*
@@ -228,14 +221,13 @@ void print_value(unsigned int value) {
  * case, stop printing when we encounter a null character. If we ever each the
  * EOF, return -1, otherwise return 0.
  */
-int print_offset_data(FILE *f, int count, int null_terminated) {
+int print_offset_data(FILE *f, int count) {
 	int c;
 	while(count--) {
 		// If we get to the EOF, then there was an error.
 		if((c = fgetc(f)) == EOF) { return -1; }
-		// If the data is null terminated and we encounter a null character,
-		// then we are done.
-		if(null_terminated == 0 && c == 0) { break; }
+		// If we encounter the null character, stop printing.
+		if(c == 0) { break; }
 		printf("%c", c);
 	}
 	// Put each key and value on a new line.
@@ -300,7 +292,7 @@ int parse_ifd(FILE *f, int offset) {
 					// is ASCII, then count is decremented by the length of the
 					// character set identifier.
 					if(is_user_comment(tagid) != 0 || validate_ascii_user_comment(f, &count) == 0) {
-						if(print_offset_data(f, count, is_ascii_datatype(datatype)) == -1) {
+						if(print_offset_data(f, count) == -1) {
 							return -1;
 						}
 					}
