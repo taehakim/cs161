@@ -7,18 +7,18 @@
 
 // Every PNG starts with these 8 bytes. Make sure to specify the length
 // otherwise the comiler will attach a null char at the end.
-static char PNG_HEADER[8] = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a";
+static unsigned char PNG_HEADER[8] = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a";
 // Chunk types.
-static char* CHUNK_TYPES[3] = {
-	"\x74\x45\x58\x74", // tEXt
-	"\x7A\x54\x58\x74", // zTXt
-	"\x74\x49\x4D\x45"  // tIME
+static unsigned char* CHUNK_TYPES[3] = {
+	(unsigned char*) "\x74\x45\x58\x74", // tEXt
+	(unsigned char*) "\x7A\x54\x58\x74", // zTXt
+	(unsigned char*) "\x74\x49\x4D\x45"  // tIME
 };
 
 /*
  * Returns 0 if the two arrays are the same, -1 otherwise.
  */
-int array_cmp(char a[], char b[], int n) {
+int array_cmp(unsigned char a[], unsigned char b[], int n) {
 	while(n--) {
 		if(a[n] != b[n]) { return -1; }
 	}
@@ -30,8 +30,8 @@ int array_cmp(char a[], char b[], int n) {
  * If the header is valid, returns 0, otherwise -1.
  */
 int validate_png_header(FILE *f) {
-	char c;
-	for(int i = 0; i < 8; i++) {
+	int i, c;
+	for(i = 0; i < 8; i++) {
 		c = fgetc(f);
 		if(c == EOF || c != PNG_HEADER[i]) { return -1; }
 	}
@@ -56,7 +56,7 @@ int parse_int(FILE *f) {
  * Returns the index of 'chunktype' in CHUNK_TYPES, otherwise -1.
  */
 int parse_png_chunktype(FILE *f) {
-	char bytes[4];
+	unsigned char bytes[4];
 	int i, c;
 	for(i = 0; i < 4; i++) {
 		c = fgetc(f);

@@ -182,8 +182,8 @@ int is_user_comment(int tagid) {
  * length of the identifier.
  */
 int validate_ascii_user_comment(FILE *f, int *count) {
-	int c;
-	for(int i = 0; i < sizeof(ASCII_USER_COMMENT); i++) {
+	int c, i;
+	for(i = 0; i < sizeof(ASCII_USER_COMMENT); i++) {
 		if((c = fgetc(f)) != ASCII_USER_COMMENT[i]) { return -1; }
 	}
 	*count -= sizeof(ASCII_USER_COMMENT);
@@ -195,7 +195,8 @@ int validate_ascii_user_comment(FILE *f, int *count) {
  * the tagid was not found in TAGIDS.
  */
 int print_tag_name(int tagid) {
-	for(int i = 0; i < sizeof(TAGIDS); i++) {
+	int i;
+	for(i = 0; i < sizeof(TAGIDS); i++) {
 		if(tagid == TAGIDS[i]) {
 			printf("%s: ", TAG_NAMES[i]);
 			return 0;
