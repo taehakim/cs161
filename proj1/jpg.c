@@ -208,12 +208,7 @@ int print_tag_name(int tagid) {
  * Prints the 4 chars represented within the int.
  */
 void print_value(unsigned int value) {
-	char bytes[4];
-	bytes[0] = value;
-	bytes[1] = value >> 8;
-	bytes[2] = value >> 16;
-	bytes[3] = value >> 24;
-	printf("%.4s\n", bytes);
+	printf("%.4s\n", (char*) &value);
 }
 
 /*
