@@ -3,24 +3,17 @@
 #include <stdlib.h>
 #include <zlib.h>
 #include "png.h"
+#include "fpeek.h"
 
-// Every PNG starts with these 8 bytes.
-static char HEADER[8] = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a";
+// Every PNG starts with these 8 bytes. Make sure to specify the length
+// otherwise the comiler will attach a null char at the end.
+static char PNG_HEADER[8] = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a";
 // Chunk types.
 static char* CHUNK_TYPES[3] = {
 	"\x74\x45\x58\x74", // tEXt
 	"\x7A\x54\x58\x74", // zTXt
 	"\x74\x49\x4D\x45"  // tIME
 };
-
-/*
- * Returns the next byte in 'f' without advancing the position.
- */
-int fpeek(FILE *f) {
-	int c = fgetc(f);
-	ungetc(c, f);
-	return c;
-}
 
 /*
  * Returns 0 if the two arrays are the same, -1 otherwise.
@@ -33,14 +26,14 @@ int array_cmp(char a[], char b[], int n) {
 }
 
 /* 
- * Ensures that the first 8 bytes of 'f' are equal to 'HEADER'.
+ * Ensures that the first 8 bytes of 'f' are equal to 'PNG_HEADER'.
  * If the header is valid, returns 0, otherwise -1.
  */
-int validate_header(FILE *f) {
+int validate_png_header(FILE *f) {
 	char c;
 	for(int i = 0; i < 8; i++) {
 		c = fgetc(f);
-		if(c == EOF || c != HEADER[i]) { return -1; }
+		if(c == EOF || c != PNG_HEADER[i]) { return -1; }
 	}
 	return 0;
 }
@@ -62,7 +55,7 @@ int parse_int(FILE *f) {
 /*
  * Returns the index of 'chunktype' in CHUNK_TYPES, otherwise -1.
  */
-int parse_chunktype(FILE *f) {
+int parse_png_chunktype(FILE *f) {
 	char bytes[4];
 	int i, c;
 	for(i = 0; i < 4; i++) {
@@ -180,12 +173,12 @@ int parse_tIME(unsigned char data[], int length) {
  * Returns 1 if a chunk is parsed, 0 if it was the last chunk in the file, and
  * -1 if the chunk was invalid.
  */
-int parse_chunk(FILE *f) {
+int parse_png_chunk(FILE *f) {
 	// Parse length.
 	int length = parse_int(f);
 	if(length < 0) { return -1; }
 	// Parse chunktype.
-	int chunktype = parse_chunktype(f);
+	int chunktype = parse_png_chunktype(f);
 	if(chunktype < 0) { return -1; }
 	// Unknown chunk type, skip.
 	if(chunktype > 2) {
@@ -234,9 +227,9 @@ int parse_chunk(FILE *f) {
  * If it isn't a PNG file, return -1 and print nothing.
  */
 int analyze_png(FILE *f) {
-	if(validate_header(f) != -1) {
+	if(validate_png_header(f) != -1) {
 		int c;
-		while((c = parse_chunk(f))) {
+		while((c = parse_png_chunk(f))) {
 			if(c < 0) { return -1; }
 		}
 		return 0;
