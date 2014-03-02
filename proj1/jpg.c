@@ -353,16 +353,19 @@ int parse_jpg_chunk(FILE *f) {
 		// Subtract 2 because the length corresponds to the size of the data
 		// section and the length field.
 		length -= 2;
-		// Test whether the chunk is an APP1 chunk or not.
-		if(is_app1_chunk(marker) != -1) {
-			// Parse the APP1 chunk. There is only 1 APP1 chunk in the files
-			// relevant to this project, so if parsing succeeds, just quit,
-			// otherwise error.
-			return (parse_app1_chunk(f) == 0) ? 0 : -1;
+		// Only parse if there is something to parse.
+		if(length > 0) {
+			// Test whether the chunk is an APP1 chunk or not.
+			if(is_app1_chunk(marker) != -1) {
+				// Parse the APP1 chunk. There is only 1 APP1 chunk in the files
+				// relevant to this project, so if parsing succeeds, just quit,
+				// otherwise error.
+				return (parse_app1_chunk(f) == 0) ? 0 : -1;
+			}
+			// Ensure the length is nonnegative and forward the position to the
+			// end of the chunk.
+			if(length < 0 || fseek(f, length, SEEK_CUR) != 0) { return -1; }
 		}
-		// Ensure the length is nonnegative and forward the position to the end
-		// of the chunk.
-		if(length < 0 || fseek(f, length, SEEK_CUR) != 0) { return -1; }
 	}
 	if(fpeek(f) == EOF) { return 0; }
 	return 1;

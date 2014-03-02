@@ -180,9 +180,10 @@ int parse_png_chunk(FILE *f) {
 	// Parse chunktype.
 	int chunktype = parse_png_chunktype(f);
 	if(chunktype < 0) { return -1; }
-	// Unknown chunk type, skip.
-	if(chunktype > 2) {
-		fseek(f, length + 4, SEEK_CUR);
+	// Unknown chunk type or zero length, skip.
+	if(chunktype > 2 || length == 0) {
+		// Skip an extra 4 for the checksum.
+		if(fseek(f, length + 4, SEEK_CUR) != 0) { return -1; }
 	} else {
 		// Initialize data buffer;
 		unsigned char* data = malloc(sizeof(unsigned char) * length);
