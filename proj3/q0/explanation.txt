@@ -1,0 +1,10 @@
+a.) First, open the packet capture file and import the private key in Wireshark.
+Then, look through the packets with protocol 'HTTP' that is the response to
+the 'GET' request to '/secret.html'. After selecting this packet, at the bottom
+of the window, select 'Decrypted SSL data'. The resulting panel will show the
+secret.
+b.) TLS_RSA_WITH_AES_256_CBC_SHA
+c.) If the communication had used Diffie-Hellman instead of RSA, then the data
+has perfect forward secrecy. Meaning that even if the server's private key were
+found, the random exponents generated during the handshake would be lost
+forever, meaning that the packets could not be decrypted.

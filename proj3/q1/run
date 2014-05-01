@@ -1,0 +1,21 @@
+#! /usr/bin/env ruby
+
+'q1_privkey.priv'
+'q1_pubkey.pub'
+'server_pubkey.pub'
+
+public_key = File.open('server_pubkey.pub').read
+
+0.upto(7).map do |t|
+  Thread.new do
+    (t*1000).upto((t+1)*1000).each do |n|
+      puts n
+      `./generate_rsa_pair #{n}`
+
+      if public_key == File.open('q1_pubkey.pub').read
+        puts File.open('q1_privkey.priv').read
+        Kernel.exit
+      end
+    end
+  end
+end.each(&:join)

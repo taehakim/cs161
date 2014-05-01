@@ -1,0 +1,16 @@
+a.) First, run 'run' to obtain the private key. This script
+iterates over the values between 0 and 8000 and passes each
+value to 'generate_rsa_pair'. The rsa pair program has been
+edited to take an integer to pass to srand to seed the
+random values used for key generation. This works because
+the original program was only ever using values in between
+0 and 8000 for this anyway. After acquiring the proper
+private key, start listening to eth0 in Wireshark and import
+the private key. Look for the response to the 'GET' request
+to '/chat.html' and the messages will be in that packet.
+b.) Line 148 does not do what the comment above it says it
+should do. The comment states that it adds the microseconds
+to the seconds but it only replaces the value. This reduces
+the entropy of the seed from ~32 bits to ~13 bits. If the
+seed value did have 32 bits of entropy then this scheme
+would be secure.
