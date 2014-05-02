@@ -1,0 +1,28 @@
+a.) For both attacks, first generate a private key. With the private key,
+generate a certificate requirement with whatever data you want, the CN will
+be rewritten later. Once the request files have been generated, use rewrite_cn
+to inject malformed CN values into the files. One of the values will be equal to
+'data.gov-of-caltopia.info/pwn.neocal.info' which will trigger the certificate
+validation script to only parse up to the slash, parsing a value of the CN of
+'data.gov-of-caltopia.info'. The second malformed CN value will be equal to
+'data.gov-of-caltopia.info\0pwn.neocal.info' where '\0' is a null character.
+This will trigger the certificate validation script to only compare the first
+26 characters with 'strncmp' so that it thinks the CN is equal to its domain.
+After creating these malformed certificate requests, pass them into the CA and
+retrieve the certificates. Install these certificates into sslsniff and start
+sniffing. The 'rewriter.rb' simply rewrites the POST parameters. It changes the
+value of 'emergency_kill' from 'false' to 'true '. Note the extra space at the
+end of the new value, it is to ensure that the Content-Length is still correct.
+b.) gov-of-caltopia.info didn't need to have any vulneravbilities for this
+attack to work. Their setup could have been completely bug proof and these
+attacks would still work. As far as the server can tell, the attacker was a
+legitimate user. However, they could setup two-factor authentication in order to
+prevent attacks like this.
+c.) Governor Sylvester Stalloon should be using much better software to ensure
+the validity of the certificates he receives. Both of these attacks came from
+vulnerabilities in this software.
+d.) budget-certz-r-us.biz should validate the CN for certificate requests.
+Specifically, it should filter out '/' and '\0' characters. But instead of
+blacklisting, it should only allow alphanumeric and dash characters, or whatever
+is valid to be in a domain. They should probably also do similar filtering on
+the other subject fields just in case there is some similar vulnerability.
