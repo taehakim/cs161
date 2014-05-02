@@ -1,0 +1,19 @@
+a.) First, generate a private key and certificate request file for
+'email.gov-of-caltopia.info'. Then use 'digipwntar/sign' to create a x509
+certificate. Then start 'local_webserver/localwebserver' with the proper
+command line arguments pointing to both the private key and certificate. Find
+the IP address of eth0 by running 'ifconfig eth0' and enter that IP into the
+'pcap_tool.py' file. This packet capture script will intercept all DNS requests
+and for those requesting 'email.gov-of-caltopia.info.', it will send a packet
+to the requester that it is at the IP address of your local webserver that you
+started before. These spoofed DNS response packets should arrive before any
+legitimate response from a real DNS server. The Governor will then type in his
+credentials and they will be printed out in the terminal where you ran the local
+webserver.
+b.) DNSSEC can be used to prevent this attack. If the Governor's browser
+required DNSSEC, then we could not spoof a DNS record without the private key
+of 'gov-of-caltopia.info' or the top level 'info' DNSSEC server. The
+implications of this vulnerability on the Internet today are important, but
+don't invalidate the use for TLS. Someone will have to have access to all of
+your traffic, which isn't easy, it may be easier to simply gain access to your
+machine directly.
